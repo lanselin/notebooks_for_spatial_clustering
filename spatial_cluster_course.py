@@ -10,11 +10,18 @@ import geopandas as gpd
 from sklearn.metrics import pairwise_distances
 from scipy.stats import spearmanr
 from libpysal.weights import KNN, w_intersection
+import matplotlib.pyplot as plt
+from scipy.cluster.hierarchy import dendrogram, linkage
+from sklearn.preprocessing import StandardScaler
 
 _all_ = ["cluster_stats",
          "stress_value",
          "distcorr",
-         "common_coverage"]
+         "common_coverage",
+         "plot_dendrogram",
+         "cluster_center",
+         "cluster_fit",
+         "cluster_map"]
 
 
 def cluster_stats(clustlabels):
@@ -133,14 +140,14 @@ def common_coverage(coord1,coord2,k=6):
     return n_int, abscov, relcov
 
 
-def plot_clusters(gdf,clustlabels,figsize=(5,5),title="Clusters",cmap='Set2'):
+def cluster_map(gdf,clustlabels,figsize=(5,5),title="Clusters",cmap='Set2'):
     """
     Plot clusters on a map
 
     Arguments
     ---------
     gdf         : geodataframe with the polygons
-    clustlabels : cluster labels from a scikit-learn cluster class
+    clustlabels : cluster labels 
     figsize     : figure size, default = (5,5)
     title       : title for the plot
     cmap        : colormap, default = 'Set2'
@@ -149,8 +156,6 @@ def plot_clusters(gdf,clustlabels,figsize=(5,5),title="Clusters",cmap='Set2'):
     -------
     None
     """
-
-    import matplotlib.pyplot as plt
 
     gdf_temp = gdf.copy()
     gdf_temp['cluster'] = clustlabels.astype(str) 
@@ -161,65 +166,106 @@ def plot_clusters(gdf,clustlabels,figsize=(5,5),title="Clusters",cmap='Set2'):
     plt.show()
 
 
-def plot_dendrogram(std_data,clust_obj,labels,n_clusters,method='ward',figsize=(10,7),title="Dendrogram"):
+def plot_dendrogram(std_data,n_clusters,
+                    package='scipy',method='ward',
+                    labels=None,figsize=(12,7),title="Dendrogram"):
     """
     Plot dendrogram
 
     Arguments
     ---------
-    std_data       : standardized data
-    clust_obj      : clustering object from scikit-learn
-    labels         : labels for the dendrogram
+    std_data       : standardized data or linkage result from scipy.cluster
     n_clusters     : number of clusters
-    method         : method for linkage, default = 'ward'
-    figsize        : figure size, default = (10,7)
-    title          : title for the plot
+    package        : module used for cluster calculation, default `scipy`, linkage
+                     structure is passed as std_data, option `scikit` computes
+                     linkage from standardize input array
+    labels         : labels for the dendrogram, default None, uses sequence numbers,
+                     otherwise numpy array (typically taken from original data frame)
+    method         : method for linkage, default = 'ward', ignored when linkage is passed
+    figsize        : figure size, default = (12,7)
+    title          : title for the plot, default "Dendrogram"
 
     Returns
     -------
-    None
+    R              : dictionary produced by dendrogram
     """
+    nclusters = n_clusters
+    if package == 'scikit':
+        Z = linkage(std_data, method=method)
+    elif package == 'scipy':
+        Z = std_data
+    else:
+        raise Exception("Invalid input")
 
-    import matplotlib.pyplot as plt
-    from scipy.cluster.hierarchy import dendrogram, linkage
-
-    Z = linkage(std_data, method=method)
     # Plot the dendrogram
     plt.figure(figsize=figsize)
-    dendrogram(Z, labels=labels, orientation='top', leaf_rotation=90, 
-            leaf_font_size=7, color_threshold=clust_obj.distances_[(1-n_clusters)])
+    R = dendrogram(Z, labels=labels, orientation='top', leaf_rotation=90, 
+            leaf_font_size=7, color_threshold=Z[1-nclusters,2])
     plt.title(title)
     plt.xlabel("Observations")
     plt.ylabel("Distance")
     plt.show()
+    return R
 
-
-def clusters_summary(data,clustlabels,n_clusters):
+def cluster_center(data,clustlabels):
     """
-    Compute the Within-cluster Sum of Squares (WSS) and Between-cluster Sum of Squares (BSS)
+    Compute cluster centers for original variables
+
+    Arguments
+    ---------
+    data         : data frame with cluster variable observations
+    clustlabels  : cluster labels (integer or string)
+
+    Returns
+    -------
+    clust_means,clust_medians : tuple with data frames of cluster means
+                                and cluster medians for each variable
+    """
+
+    dt_clust = data.copy().assign(cluster=clustlabels)
+    clust_means = dt_clust.groupby('cluster').mean()
+    clust_medians = dt_clust.groupby('cluster').median()
+    return clust_means,clust_medians
+
+def cluster_fit(data,clustlabels,n_clusters,correct=False,printopt=True):
+    """
+    Compute the sum of squared deviations from the mean measures of fit.
 
     Arguments
     ---------
     data         : data used for clustering
-    clustlabels  : cluster labels from a scikit-learn cluster class
+    clustlabels  : cluster labels
     n_clusters   : number of clusters
+    correct      : correction for degrees of freedom, default = False for
+                   no correction (division by n), other option is True, 
+                   which gives division by n-1
+    printopt     : flag to provide listing of results, default = True
 
     Returns
     -------
-    None
+    clustfit     : dictionary with fit results
+                   TSS = total sum of squares
+                   Cluster_WSS = WSS per cluster
+                   WSS = total WSS
+                   BSS = total BSS
+                   Ratio = BSS/WSS
     """
 
-    from sklearn.preprocessing import StandardScaler
+    clustfit = {}
 
     X = StandardScaler().fit_transform(data)
+    if correct:
+        n = X.shape[0]
+        nn = np.sqrt((n - 1.0)/n)
+        X = X * nn
     # Compute the Total Sum of Squares (TSS) of data_cluster:
-    tss = np.sum(np.square(X - X.mean(axis=0)))
+    #tss = np.sum(np.square(X - X.mean(axis=0)))
+    tss = np.sum(np.square(X))  # X is standardized, mean = 0
+    clustfit["TSS"] = tss
     # Compute the mean of each variable by cluster
     data_tmp = data.copy().assign(cluster=clustlabels)
-    cluster_means = data_tmp.groupby('cluster').mean()
-    # Print the mean values
-    print("Mean values by cluster:")
-    print(np.round(cluster_means,2))
+    #cluster_means = data_tmp.groupby('cluster').mean()
+
     # Compute the Within-cluster Sum of Squares (WSS) for each cluster
     wss_per_cluster = []
     for cluster in range(n_clusters):
@@ -228,18 +274,24 @@ def clusters_summary(data,clustlabels,n_clusters):
         wss = np.sum(np.square(cluster_data - cluster_mean))
         wss_per_cluster.append(wss)
     wss_per_cluster = [float(wss) for wss in wss_per_cluster]
+    clustfit["Cluster_WSS"] = wss_per_cluster
     # Total Within-cluster Sum of Squares
     total_wss = sum(wss_per_cluster)
+    clustfit["WSS"] = total_wss
     # Between-cluster Sum of Squares (BSS)
     bss = tss - total_wss
+    clustfit["BSS"] = bss
     # Ratio of Between-cluster Sum of Squares to Total Sum of Squares
     ratio_bss_to_tss = bss / tss
-    # Print results
-    print("\nTotal Sum of Squares (TSS):", tss)
-    print("Within-cluster Sum of Squares (WSS) for each cluster:", np.round(wss_per_cluster,2))
-    print("Total Within-cluster Sum of Squares (WSS):", np.round(total_wss,2))
-    print("Between-cluster Sum of Squares (BSS):", np.round(bss,2))
-    print("Ratio of BSS to TSS:", np.round(ratio_bss_to_tss,2))
+    clustfit["Ratio"] = ratio_bss_to_tss
+    if printopt:
+        # Print results
+        print("\nTotal Sum of Squares (TSS):", tss)
+        print("Within-cluster Sum of Squares (WSS) for each cluster:", np.round(wss_per_cluster,3))
+        print("Total Within-cluster Sum of Squares (WSS):", np.round(total_wss,3))
+        print("Between-cluster Sum of Squares (BSS):", np.round(bss,3))
+        print("Ratio of BSS to TSS:", np.round(ratio_bss_to_tss,3))
+    return clustfit
 
 
 def elbow_plot(std_data, init='k-means++', max_clusters=None):
