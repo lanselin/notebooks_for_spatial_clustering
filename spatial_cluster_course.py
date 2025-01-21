@@ -13,6 +13,7 @@ from libpysal.weights import KNN, w_intersection
 import matplotlib.pyplot as plt
 from scipy.cluster.hierarchy import dendrogram, linkage
 from sklearn.preprocessing import StandardScaler
+from sklearn.cluster import KMeans
 
 _all_ = ["cluster_stats",
          "stress_value",
@@ -21,7 +22,9 @@ _all_ = ["cluster_stats",
          "plot_dendrogram",
          "cluster_center",
          "cluster_fit",
-         "cluster_map"]
+         "cluster_map",
+         "elbow_plot",
+         "plot_silhouette"]
 
 
 def cluster_stats(clustlabels):
@@ -294,33 +297,32 @@ def cluster_fit(data,clustlabels,n_clusters,correct=False,printopt=True):
     return clustfit
 
 
-def elbow_plot(std_data, init='k-means++', max_clusters=None):
+def elbow_plot(std_data, n_init = 150, init='k-means++', max_clusters=20,
+               random_state= 1234567):
     """
-    Plot the elbow plot for KMeans clustering
+    Plot the elbow plot for partitioning clustering methods
 
     Arguments
     ---------
     std_data    : standardized data
-    max_clusters: maximum number of clusters to consider, default = N/5
+    n_init      : number of inital runs, default 150
+    init        : K-means initialization, default = 'k-means++'
+    max_clusters: maximum number of clusters to consider, default = 20
 
     Returns
     -------
     None
     """
 
-    import matplotlib.pyplot as plt
-    from sklearn.cluster import KMeans
-
-    if max_clusters is None:
-        max_clusters = int(std_data.shape[0]/5)
     inertia = []
-    for k in range(1, max_clusters):
-        kmeans = KMeans(n_clusters=k, init=init, random_state=123).fit(std_data)
+    for k in range(2, max_clusters+1):
+        kmeans = KMeans(n_clusters=k, n_init=n_init, init=init, random_state=random_state).fit(std_data)
         inertia.append(kmeans.inertia_)
-    plt.plot(range(1, max_clusters), inertia, marker='o')
+    plt.plot(range(2, max_clusters+1), inertia, marker='o')
     plt.xlabel('Number of clusters')
+    plt.xticks(range(2, max_clusters+1, 2))
     plt.ylabel('Inertia')
-    plt.title('Elbow Plot - Kmeans Clustering')
+    plt.title('Elbow Plot')
 
 
 def plot_scatter(x, y, labels=None, title="Scatter plot", figsize=(8, 6)):
@@ -360,7 +362,8 @@ def plot_scatter(x, y, labels=None, title="Scatter plot", figsize=(8, 6)):
     plt.show()
 
 
-def plot_silhouette(sil_scores, obs_labels, clustlabels, title="Silhouette plot", figsize=(8, 10)):
+def plot_silhouette(sil_scores, obs_labels, clustlabels, 
+                    title="Silhouette plot", figsize=(8, 10), font_size = 8):
     """
     Plot silhouette scores for each observation in each cluster
 
@@ -371,14 +374,12 @@ def plot_silhouette(sil_scores, obs_labels, clustlabels, title="Silhouette plot"
     clustlabels  : cluster labels (list)
     title        : title for the plot
     figsize      : figure size, default = (8, 10)
+    fontsize     : size for label, default = 8
 
     Returns
     -------
     None
     """
-
-    import matplotlib.pyplot as plt
-    import numpy as np
 
     silhouette_values = np.array(sil_scores) 
     observation_labels = np.array(obs_labels) 
@@ -400,7 +401,7 @@ def plot_silhouette(sil_scores, obs_labels, clustlabels, title="Silhouette plot"
             label=f"Cluster {cluster}"
         )
     ax.set_yticks(np.arange(len(observation_labels_sorted)))
-    ax.set_yticklabels(observation_labels_sorted, fontsize=8) 
+    ax.set_yticklabels(observation_labels_sorted, fontsize=font_size) 
     ax.set_xlabel("Silhouette Score")
     ax.set_title(title)
     ax.axvline(x=np.mean(silhouette_values), color="red", linestyle="--", label="Mean Silhouette Score")
