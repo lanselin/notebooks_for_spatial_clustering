@@ -273,8 +273,11 @@ def cluster_fit(data,clustlabels,n_clusters,correct=False,printopt=True):
     wss_per_cluster = []
     for cluster in range(n_clusters):
         cluster_data = X[data_tmp['cluster'] == cluster]
-        cluster_mean = cluster_data.mean(axis=0)
-        wss = np.sum(np.square(cluster_data - cluster_mean))
+        if cluster_data.shape[0] > 1: # avoid issues with singletons
+            cluster_mean = cluster_data.mean(axis=0)
+            wss = np.sum(np.square(cluster_data - cluster_mean))
+        else:
+            wss = 0.0
         wss_per_cluster.append(wss)
     wss_per_cluster = [float(wss) for wss in wss_per_cluster]
     clustfit["Cluster_WSS"] = wss_per_cluster
