@@ -143,7 +143,7 @@ def common_coverage(coord1,coord2,k=6):
     return n_int, abscov, relcov
 
 
-def cluster_map(gdf,clustlabels,figsize=(5,5),title="Clusters",cmap='Set2'):
+def cluster_map(gdf,clustlabels,figsize=(5,5),title="Clusters",cmap='Set2',show_axis=False):
     """
     Plot clusters on a map
 
@@ -154,6 +154,7 @@ def cluster_map(gdf,clustlabels,figsize=(5,5),title="Clusters",cmap='Set2'):
     figsize     : figure size, default = (5,5)
     title       : title for the plot
     cmap        : colormap, default = 'Set2'
+    show_axis   : flag to show axis, default = False
 
     Returns
     -------
@@ -165,6 +166,8 @@ def cluster_map(gdf,clustlabels,figsize=(5,5),title="Clusters",cmap='Set2'):
     fig, ax = plt.subplots(figsize=figsize)
     gdf_temp.plot(column='cluster', ax=ax, legend=True, cmap=cmap,
             legend_kwds={'bbox_to_anchor': (1, 0.5), 'loc': 'center left'}) 
+    if not show_axis:
+        ax.axis('off')            
     ax.set_title(title)
     plt.show()
 
