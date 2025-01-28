@@ -143,33 +143,49 @@ def common_coverage(coord1,coord2,k=6):
     return n_int, abscov, relcov
 
 
-def cluster_map(gdf,clustlabels,figsize=(5,5),title="Clusters",cmap='Set2',show_axis=False):
+def cluster_map(gdf, clustlabels, title='Clusters', grid_shape=(1, 1), figsize=(5, 5), cmap='Set2', show_axis=False):
     """
-    Plot clusters on a map
+    Plot multiple cluster maps in a grid. Can handle both single and multiple maps.
 
     Arguments
     ---------
-    gdf         : geodataframe with the polygons
-    clustlabels : cluster labels 
-    figsize     : figure size, default = (5,5)
-    title       : title for the plot
-    cmap        : colormap, default = 'Set2'
-    show_axis   : flag to show axis, default = False
+    gdf          : geodataframe with the polygons
+    clustlabels  : list or single array of cluster labels
+    title        : list or single string of titles for each subplot
+    grid_shape   : tuple defining the grid layout (default = (1,1))
+    figsize      : figure size, default = (5,5)
+    cmap         : colormap, default = 'Set2'
+    show_axis    : flag to show axis, default = False
 
     Returns
     -------
     None
     """
+    if not isinstance(clustlabels, (list, tuple)):
+        clustlabels = [clustlabels]
+    if not isinstance(title, (list, tuple)):
+        title = [title]
+    
+    num_maps = len(clustlabels) 
+    
+    fig, axes = plt.subplots(grid_shape[0], grid_shape[1], figsize=figsize)
+    axes = np.array(axes).flatten()
+    
+    for i in range(num_maps):
+        gdf_temp = gdf.copy()  
+        gdf_temp['cluster'] = np.array(clustlabels[i]).astype(str) 
+        
+        gdf_temp.plot(column='cluster', ax=axes[i], legend=True, cmap=cmap,
+                      legend_kwds={'bbox_to_anchor': (1, 0.5), 'loc': 'center left'})
+        
+        if not show_axis:
+            axes[i].axis('off') 
+        
+        axes[i].set_title(title[i]) 
+    
+    plt.tight_layout()  
+    plt.show()  
 
-    gdf_temp = gdf.copy()
-    gdf_temp['cluster'] = clustlabels.astype(str) 
-    fig, ax = plt.subplots(figsize=figsize)
-    gdf_temp.plot(column='cluster', ax=ax, legend=True, cmap=cmap,
-            legend_kwds={'bbox_to_anchor': (1, 0.5), 'loc': 'center left'}) 
-    if not show_axis:
-        ax.axis('off')            
-    ax.set_title(title)
-    plt.show()
 
 
 def plot_dendrogram(std_data,n_clusters,
