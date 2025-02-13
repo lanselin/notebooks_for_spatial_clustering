@@ -24,7 +24,11 @@ _all_ = ["cluster_stats",
          "cluster_fit",
          "cluster_map",
          "elbow_plot",
-         "plot_silhouette"]
+         "plot_silhouette",
+         "cluster_fragmentation",
+         "cluster_joincount",
+         "cluster_compactness",
+         "cluster_diameter"]
 
 
 def cluster_stats(clustlabels):
@@ -433,3 +437,179 @@ def plot_silhouette(sil_scores, obs_labels, clustlabels,
     ax.legend(title="Clusters", bbox_to_anchor=(1.05, 1), loc="upper left")
     plt.show()
 
+def cluster_fragmentation(clust_stats,cluster_fragmentation,fragmentation,spatially_constrained):
+    """
+    Fragmentation indices from pygeoda spatial validation
+
+    Arguments:
+    ----------
+    clust_stats           : data frame with cluster cardinalities
+    cluster_fragmentation : cluster_fragementation attribute from pygeoda.spatial_validation
+                            entropy, standardized entropy, Simpson and standardized Simpson by cluster
+    fragmentation         : fragmentation attribute from pygeoda.spatial_validation
+                            same items as cluster_fragmentation but for all clusters together
+    spatially_contrained  : flag for spatially_constrained from pygeoda.spatial_validation
+
+    Returns:
+    --------
+    valfrag               : data frame with fragmentation statistics
+    
+    """
+    
+    frag = cluster_fragmentation
+    fragall = fragmentation
+    fragt = []
+    ntot = clust_stats['Cardinality'].sum()
+    if not(spatially_constrained):
+        jj = 0
+        for i in frag:
+            nn = clust_stats['Cardinality'].iloc[jj]
+            fragt.append({
+                'Label' : jj,
+                'N' : nn,
+                "Sub" : i.n,
+                "Entropy" : i.entropy,
+                "Entropy*" : i.std_entropy,
+                "Simpson" : i.simpson,
+                "Simpson*" : i.std_simpson
+            })
+            jj = jj + 1
+
+    fragt.append({
+        'Label' : "All",
+        'N' : ntot,
+        'Sub' : "",
+        "Entropy" : fragall.entropy,
+        "Entropy*" : fragall.std_entropy,
+        "Simpson" : fragall.simpson,
+        "Simpson*" : fragall.std_simpson
+    })
+
+    valfrag = pd.DataFrame(fragt)
+
+    print("Fragmentation")
+    print(valfrag.to_string(index=False))
+
+    return(valfrag)
+
+def cluster_joincount(clust_stats,joincount_ratio,all_joincount_ratio):
+    """
+    Join count cluster statistics from pygeoda.spatial_validation
+
+    Arguments:
+    ----------
+    clust_stats         : cluster cardinalities
+    joincount_ratio     : joincount_ratio attribute from pygeoda.spatial_validation
+                          join count statistics by cluster
+    all_joincount_ratio : all_joincount_ration attribute from pygeoda.spatial_validation
+                          join count statistics for all clusters in aggregate
+
+    Returns:
+    --------
+    valjc               : data frame with join count statistics
+    
+    """
+
+    jc = joincount_ratio
+    ntot = clust_stats['Cardinality'].sum()
+    joinct = []
+    jj = 0
+    nbrstot = 0
+    jctot = 0
+    for i in jc:
+        nbrstot = nbrstot + i.neighbors
+        jctot = jctot + i.join_count
+        joinct.append({
+            'Label' : jj,
+            "N" : i.n,
+            "Neighbors" : i.neighbors,
+            "Join Count" : i.join_count,
+            "Ratio" : np.round(i.ratio,3)
+        })
+        jj = jj + 1
+    joinct.append({
+        'Label' : "All",
+        'N' : ntot,
+        "Neighbors" : nbrstot,
+        "Join Count" : jctot,
+        "Ratio" : np.round(all_joincount_ratio.ratio,4)
+    })
+
+    valjc = pd.DataFrame(joinct)
+
+    print("Join Count Ratio")
+    print(valjc.to_string(index=False))
+
+    return(valjc)
+
+def cluster_compactness(clust_stats,compactness,spatially_constrained):
+    """
+    Compactness statistics from pygeoda.spatial_validation
+
+    Arguments:
+    ----------
+    clust_stats           : cluster cardinalities
+    compactness           : compactness attribute from pygeoda.spatial_validation
+                            area, perimeter and isoperimeteri quotient
+    spatially_contrained  : flag for spatially_constrained from pygeoda.spatial_validation
+
+    Returns:
+    --------
+    valcomp               : data frame with compactness statistics
+    
+    """
+
+    if not(spatially_constrained):
+        print("Error: Compactness is only applicable to spatially constrained clusters")
+        return
+    
+    comp = compactness
+
+    compt = []
+    jj = 0
+
+    for i in comp:
+        nn = clust_stats['Cardinality'].iloc[jj]
+        compt.append({
+            'Label' : jj,
+            'N' : nn,
+            "Area" : i.area,
+            "Perimeter" : i.perimeter,
+            "IPQ" : i.isoperimeter_quotient
+        })
+        jj = jj + 1
+
+    valcomp = pd.DataFrame(compt)
+
+    print("Compactness")
+    print(valcomp.to_string(index=False))
+
+    return(valcomp)
+
+def cluster_diameter(clust_stats,diameter,spatially_constrained):
+
+    if not(spatially_constrained):
+        print("Error: Diameter is only applicable to spatially constrained clusters")
+        return
+
+    diam = diameter
+
+    diamt = []
+    jj = 0
+    for i in diam:
+        nn = clust_stats['Cardinality'].iloc[jj]
+
+        diamt.append({
+            'Label' : jj,
+            'N' : nn,
+            "Steps" : i.steps,
+            "Ratio" : i.ratio
+        })
+        jj = jj + 1
+
+    valdiam = pd.DataFrame(diamt)
+
+    print("Diameter")
+    print(valdiam.to_string(index=False))
+
+    return(valdiam)
