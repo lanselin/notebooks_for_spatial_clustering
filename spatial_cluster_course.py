@@ -143,7 +143,7 @@ def common_coverage(coord1,coord2,k=6):
     return n_int, abscov, relcov
 
 
-def cluster_map(gdf, clustlabels, title='Clusters', grid_shape=(1, 1), figsize=(5, 5), cmap='Set2', show_axis=False):
+def cluster_map(gdf, clustlabels, title='Clusters', grid_shape=(1, 1), figsize=(5, 5), cmap='Set2', show_axis=False, baselayer=None, markersize=10):
     """
     Plot multiple cluster maps in a grid. Can handle both single and multiple maps.
 
@@ -156,6 +156,8 @@ def cluster_map(gdf, clustlabels, title='Clusters', grid_shape=(1, 1), figsize=(
     figsize      : figure size, default = (5,5)
     cmap         : colormap, default = 'Set2'
     show_axis    : flag to show axis, default = False
+    baselayer    : geodataframe with the baselayer, default = None
+    markersize   : size of the markers, if any, default = 10
 
     Returns
     -------
@@ -174,9 +176,10 @@ def cluster_map(gdf, clustlabels, title='Clusters', grid_shape=(1, 1), figsize=(
     for i in range(num_maps):
         gdf_temp = gdf.copy()  
         gdf_temp['cluster'] = np.array(clustlabels[i]).astype(str) 
-        
+        if baselayer is not None:
+            baselayer.plot(ax=axes[i], color=(1, 1, 1, 0), edgecolor='black')
         gdf_temp.plot(column='cluster', ax=axes[i], legend=True, cmap=cmap,
-                      legend_kwds={'bbox_to_anchor': (1, 0.5), 'loc': 'center left'})
+                      legend_kwds={'bbox_to_anchor': (1, 0.5), 'loc': 'center left'}, markersize=markersize)
         
         if not show_axis:
             axes[i].axis('off') 
