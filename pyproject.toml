@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "spatial_cluster_helper"
+version = "0.1.1"
+authors = [
+    { name = "Luc Anselin", email = "lanselin@gmail.com" },
+    { name = "Pedro Amaral", email = "pedrovma.ufmg@gmail.com" }
+]
+description = "A package for spatial clustering and analysis"
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "MIT" }
+
+dependencies = [
+    "numpy",
+    "pandas",
+    "geopandas",
+    "scikit-learn",
+    "scipy",
+    "matplotlib",
+    "libpysal"
+]
+
+[project.urls]
+Homepage = "https://github.com/lanselin/notebooks_for_spatial_clustering"
+Repository = "https://github.com/lanselin/notebooks_for_spatial_clustering"
