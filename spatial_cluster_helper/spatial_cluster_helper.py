@@ -111,7 +111,7 @@ def distcorr(dist,embed):
     return rho
 
 
-def common_coverage(coord1,coord2,k=6):
+def common_coverage(coord1,coord2,k=6,silence_warnings=False):
     """
     Computes common coverage percentage between two knn weights,
     typically two MDS solutions, or geographic coordinates and MDS
@@ -122,6 +122,7 @@ def common_coverage(coord1,coord2,k=6):
                    with coordinates
     coord2       : numpy array with coordinates (MDS)
     k            : nearest neighbor order, default = 6
+    silence_warnings : flag to silence warnings in libpysal weights, default = False
 
     Returns
     -------
@@ -142,7 +143,7 @@ def common_coverage(coord1,coord2,k=6):
     n = coord2.shape[0]
     n_tot = n**2
     n_init = w1.nonzero
-    w_int = w_intersection(w1,w2)
+    w_int = w_intersection(w1,w2,silence_warnings=silence_warnings)
     n_int = w_int.nonzero
     # coverage percentages
     abscov = 100.0*n_int / n_tot
