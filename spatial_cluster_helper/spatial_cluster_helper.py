@@ -297,7 +297,7 @@ def cluster_fit(data,clustlabels,n_clusters,correct=False,printopt=True):
 
     # Compute the Within-cluster Sum of Squares (WSS) for each cluster
     wss_per_cluster = []
-    for cluster in range(n_clusters):
+    for cluster in set(clustlabels):
         cluster_data = X[data_tmp['cluster'] == cluster]
         if cluster_data.shape[0] > 1: # avoid issues with singletons
             cluster_mean = cluster_data.mean(axis=0)
