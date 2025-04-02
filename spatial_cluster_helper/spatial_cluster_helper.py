@@ -31,13 +31,14 @@ _all_ = ["cluster_stats",
          "cluster_diameter"]
 
 
-def cluster_stats(clustlabels):
+def cluster_stats(clustlabels, printopt=True):
     """
     Creates a data frame with cluster labels and cardinality
 
     Arguments
     ---------
     clustlabels     : cluster labels from a scikit-learn cluster class
+    printopt        : flag to print the results, default = True
 
     Returns
     -------
@@ -47,6 +48,8 @@ def cluster_stats(clustlabels):
     totclust,clustcount = np.unique(clustlabels,return_counts=True)
     cl = np.array((totclust,clustcount)).T
     clustframe = pd.DataFrame(data=cl,columns=["Labels","Cardinality"])
+    if printopt:
+        print(clustframe.to_string(index=False))
     return(clustframe)
 
 def stress_value(dist,embed):
