@@ -15,6 +15,12 @@ from scipy.cluster.hierarchy import dendrogram, linkage
 from sklearn.preprocessing import StandardScaler
 from sklearn.cluster import KMeans
 
+# Specifically for the ensure_datasets function
+import os
+import zipfile
+import requests
+from io import BytesIO
+
 _all_ = ["cluster_stats",
          "stress_value",
          "distcorr",
@@ -617,3 +623,58 @@ def cluster_diameter(clust_stats,diameter,spatially_constrained):
     print(valdiam.to_string(index=False))
 
     return(valdiam)
+
+def ensure_datasets(
+    expected_file,
+    folder_path="./datasets/",
+    zip_url="https://raw.githubusercontent.com/pedrovma/notebooks_for_spatial_clustering/6cc588fad503d525b9213da8b339418e90920221/datasets.zip"
+):
+
+    """
+    Ensures that the required dataset file exists locally.
+
+    If the specified file is not found in the given folder path, this function downloads
+    a zip file from the provided URL and extracts its contents to the folder path.
+
+    Parameters
+    ----------
+    expected_file : str
+        Relative path to the expected file (e.g., 'ceara/ceara.shp') inside the folder_path.
+    folder_path : str, optional
+        Local folder path where the datasets should be found or extracted to.
+        Default is './datasets/'.
+    zip_url : str, optional
+        URL of the zip file containing all required datasets.
+        Default points to the datasets.zip file hosted on GitHub.
+
+    Raises
+    ------
+    RuntimeError
+        If the download fails (e.g., response status is not 200).
+
+    Notes
+    -----
+    This function assumes that the zip file contains nested folders with the required structure.
+    """
+    
+    expected_path = os.path.join(folder_path, expected_file)
+
+    if not os.path.exists(expected_path):
+        print(f"'{expected_path}' not found. Downloading and extracting dataset...")
+        response = requests.get(zip_url)
+        if response.status_code == 200:
+            with zipfile.ZipFile(BytesIO(response.content)) as z:
+                top_level = z.namelist()[0].split('/')[0]
+                for member in z.namelist():
+                    if member.endswith('/'):
+                        continue
+                    member_path = os.path.relpath(member, start=top_level)
+                    target_path = os.path.join(folder_path, member_path)
+                    os.makedirs(os.path.dirname(target_path), exist_ok=True)
+                    with open(target_path, "wb") as f:
+                        f.write(z.read(member))
+            print("Download and extraction completed.")
+        else:
+            raise RuntimeError("Failed to download the dataset zip file.")
+    else:
+        print(f"'{expected_path}' already exists. No download needed.")
