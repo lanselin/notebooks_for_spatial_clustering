@@ -677,4 +677,5 @@ def ensure_datasets(
         else:
             raise RuntimeError("Failed to download the dataset zip file.")
     else:
-        print(f"'{expected_path}' already exists. No download needed.")
+        #print(f"'{expected_path}' already exists. No download needed.")
+        pass
