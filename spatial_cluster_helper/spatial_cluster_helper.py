@@ -1,5 +1,5 @@
 """
-Utilities for spatial cluster course, winter 2025
+Utilities for spatial cluster analysis
 """
 __author__ = "Luc Anselin lanselin@gmail.com,\
     Pedro Amaral pedrovma@gmail.com"
@@ -627,7 +627,7 @@ def cluster_diameter(clust_stats,diameter,spatially_constrained):
 def ensure_datasets(
     expected_file,
     folder_path="./datasets/",
-    zip_url="https://raw.githubusercontent.com/pedrovma/notebooks_for_spatial_clustering/6cc588fad503d525b9213da8b339418e90920221/datasets.zip"
+    zip_url="https://raw.githubusercontent.com/lanselin/notebooks_for_spatial_clustering/79a3a6e7e05ad5709a6f04a9f97e40b92fb33893/datasets.zip"
 ):
 
     """

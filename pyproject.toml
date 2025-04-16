@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "spatial_cluster_helper"
-version = "0.1.1"
+version = "0.1.2"
 authors = [
     { name = "Luc Anselin", email = "lanselin@gmail.com" },
     { name = "Pedro Amaral", email = "pedrovma.ufmg@gmail.com" }
