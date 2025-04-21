@@ -627,8 +627,7 @@ def cluster_diameter(clust_stats,diameter,spatially_constrained):
 def ensure_datasets(
     expected_file,
     folder_path="./datasets/",
-    zip_url="https://raw.githubusercontent.com/lanselin/notebooks_for_spatial_clustering/79a3a6e7e05ad5709a6f04a9f97e40b92fb33893/datasets.zip"
-):
+    zip_url=None):
 
     """
     Ensures that the required dataset file exists locally.
@@ -645,7 +644,7 @@ def ensure_datasets(
         Default is './datasets/'.
     zip_url : str, optional
         URL of the zip file containing all required datasets.
-        Default points to the datasets.zip file hosted on GitHub.
+        Default is None.
 
     Raises
     ------
@@ -661,18 +660,28 @@ def ensure_datasets(
 
     if not os.path.exists(expected_path):
         print(f"'{expected_path}' not found. Downloading and extracting dataset...")
+        if zip_url is None:
+            if 'ceara' in expected_path.lower():
+                zip_url = 'https://raw.githubusercontent.com/lanselin/notebooks_for_spatial_clustering/4b54a0019aef4cc7ebb75526eb3113b05f34b2a3/datasets/ceara.zip'
+            elif 'chicago_2020_sdoh' in expected_path.lower():
+                zip_url = 'https://raw.githubusercontent.com/lanselin/notebooks_for_spatial_clustering/4b54a0019aef4cc7ebb75526eb3113b05f34b2a3/datasets/Chi_CCA.zip'
+            elif 'chi-sdoh' in expected_path.lower():
+                zip_url = 'https://raw.githubusercontent.com/lanselin/notebooks_for_spatial_clustering/4b54a0019aef4cc7ebb75526eb3113b05f34b2a3/datasets/Chi-SDOH.zip'
+            elif 'chicago_commpop' in expected_path.lower():
+                zip_url = 'https://raw.githubusercontent.com/lanselin/notebooks_for_spatial_clustering/4b54a0019aef4cc7ebb75526eb3113b05f34b2a3/datasets/chicago_commpop.zip'
+            elif 'italy_banks' in expected_path.lower():
+                zip_url = 'https://raw.githubusercontent.com/lanselin/notebooks_for_spatial_clustering/4b54a0019aef4cc7ebb75526eb3113b05f34b2a3/datasets/italy_banks.zip'
+            elif any(x in expected_path.lower() for x in ['liq_chicago', 'chicagoboundary']):
+                zip_url = 'https://raw.githubusercontent.com/lanselin/notebooks_for_spatial_clustering/4b54a0019aef4cc7ebb75526eb3113b05f34b2a3/datasets/liquor.zip'
+            elif 'spirals' in expected_path.lower():
+                zip_url = 'https://raw.githubusercontent.com/lanselin/notebooks_for_spatial_clustering/4b54a0019aef4cc7ebb75526eb3113b05f34b2a3/datasets/spirals.zip'                                                          
+            else:
+                raise ValueError(f"Unidentified data: could not determine download URL for path '{expected_path}'")
+
         response = requests.get(zip_url)
         if response.status_code == 200:
             with zipfile.ZipFile(BytesIO(response.content)) as z:
-                top_level = z.namelist()[0].split('/')[0]
-                for member in z.namelist():
-                    if member.endswith('/'):
-                        continue
-                    member_path = os.path.relpath(member, start=top_level)
-                    target_path = os.path.join(folder_path, member_path)
-                    os.makedirs(os.path.dirname(target_path), exist_ok=True)
-                    with open(target_path, "wb") as f:
-                        f.write(z.read(member))
+                z.extractall(folder_path)
             print("Download and extraction completed.")
         else:
             raise RuntimeError("Failed to download the dataset zip file.")
