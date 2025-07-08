@@ -157,7 +157,7 @@ def common_coverage(coord1,coord2,k=6,silence_warnings=False):
     return n_int, abscov, relcov
 
 
-def cluster_map(gdf, clustlabels, title='Clusters', grid_shape=(1, 1), figsize=(5, 5), cmap='Set2', show_axis=False, baselayer=None, markersize=10):
+def cluster_map(gdf, clustlabels, title='Clusters', grid_shape=(1, 1), figsize=(5, 5), cmap='Set2', show_axis=False, baselayer=None, markersize=10, legend_fontsize=None):
     """
     Plot multiple cluster maps in a grid. Can handle both single and multiple maps.
 
@@ -172,6 +172,7 @@ def cluster_map(gdf, clustlabels, title='Clusters', grid_shape=(1, 1), figsize=(
     show_axis    : flag to show axis, default = False
     baselayer    : geodataframe with the baselayer, default = None
     markersize   : size of the markers, if any, default = 10
+    legend_fontsize: size of the legend font, default = None
 
     Returns
     -------
@@ -182,6 +183,10 @@ def cluster_map(gdf, clustlabels, title='Clusters', grid_shape=(1, 1), figsize=(
     if not isinstance(title, (list, tuple)):
         title = [title]
     
+    legend_kwds = {'bbox_to_anchor': (1, 0.5), 'loc': 'center left'}
+    if legend_fontsize is not None:
+        legend_kwds['fontsize'] = legend_fontsize
+
     num_maps = len(clustlabels) 
     
     fig, axes = plt.subplots(grid_shape[0], grid_shape[1], figsize=figsize)
@@ -193,7 +198,7 @@ def cluster_map(gdf, clustlabels, title='Clusters', grid_shape=(1, 1), figsize=(
         if baselayer is not None:
             baselayer.plot(ax=axes[i], color=(1, 1, 1, 0), edgecolor='black')
         gdf_temp.plot(column='cluster', ax=axes[i], legend=True, cmap=cmap,
-                      legend_kwds={'bbox_to_anchor': (1, 0.5), 'loc': 'center left'}, markersize=markersize)
+                      legend_kwds=legend_kwds, markersize=markersize)
         
         if not show_axis:
             axes[i].axis('off') 
