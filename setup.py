@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="spatial_cluster_helper",
-    version="0.1.2",
+    version="0.1.3",
     author="Luc Anselin, Pedro Amaral",
     author_email="lanselin@gmail.com, pedrovma.ufmg@gmail.com",
     description="Support functions for spatial cluster analysis following Anselin (2024)",
