@@ -342,7 +342,7 @@ def cluster_fit(data,clustlabels,n_clusters,correct=False,printopt=True):
 
 
 def elbow_plot(std_data, n_init = 150, init='k-means++', max_clusters=20,
-               random_state= 1234567):
+               random_state= 1234567, title="Elbow Plot"):
     """
     Plot the elbow plot for partitioning clustering methods
 
@@ -352,6 +352,8 @@ def elbow_plot(std_data, n_init = 150, init='k-means++', max_clusters=20,
     n_init      : number of inital runs, default 150
     init        : K-means initialization, default = 'k-means++'
     max_clusters: maximum number of clusters to consider, default = 20
+    random_state: starting seed for KMeans
+    title       : plot title, default "Elbow Plot"
 
     Returns
     -------
@@ -366,7 +368,7 @@ def elbow_plot(std_data, n_init = 150, init='k-means++', max_clusters=20,
     plt.xlabel('Number of clusters')
     plt.xticks(range(2, max_clusters+1, 2))
     plt.ylabel('Inertia')
-    plt.title('Elbow Plot')
+    plt.title(title)
 
 
 def plot_scatter(x, y, labels=None, title="Scatter plot", figsize=(8, 6)):
